@@ -23,3 +23,4 @@ Libs\HereBeDragons\HereBeDragons-2.0.lua
 Libs\HereBeDragons\HereBeDragons-Migrate.lua
 
 Core.lua
+Herb_Data.lua
