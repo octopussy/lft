@@ -1,11 +1,11 @@
 ## Interface: 11304
 
-## Title: Lolwut Farm Tracker
+## Title: |cFF5c26ffLolwut|r's Farm Tracker
 ## Notes: Track you herbs & ore farm spots.
 
-## SavedVariables: LFTDB
+## SavedVariables: LFTDB, TIMES
 
-## Author: Lolwut
+## Author: |cFF5c26ffLolwut|r from Mirage Raceway
 ## Version: 0.1
 
 Libs\LibStub\LibStub.lua
@@ -23,4 +23,4 @@ Libs\HereBeDragons\HereBeDragons-2.0.lua
 Libs\HereBeDragons\HereBeDragons-Migrate.lua
 
 Core.lua
-Herb_Data.lua
+GatheringData.lua

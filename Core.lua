@@ -9,6 +9,7 @@ local LFT = LibStub("AceAddon-3.0"):NewAddon("LFT","AceConsole-3.0","AceEvent-3.
 LFT.HBD = LibStub("HereBeDragons-2.0")
 
 LFTDB = {}
+TIMES = {}
 
 Rows = {}
 
@@ -64,7 +65,11 @@ local function OnUpdate_ActionFrame(self, elapsed)
             actionFrame.DebugText:SetFormattedText("%f, %f - %f", x, y, nearestDist)
             actionFrame.btnGather:SetEnabled(true)
         else
-            actionFrame.DebugText:SetText("n/a")
+            local m,x,y = LFT:GetCurrentPlayerPosition()
+            local mapName = LFT.HBD:GetLocalizedMap(m)
+            local str = string.format("%s - %d (%f, %f)", mapName, m, x, y)
+            --print(str)
+            actionFrame.DebugText:SetText(str)
             actionFrame.btnGather:SetEnabled(false)
         end
     end
@@ -74,20 +79,31 @@ local function SetRowData(pos)
     
 end
 
+local function formatMinSec(sec) 
+    local m = sec / 60
+    local s = sec % 60
+    return string.format("%dm %02ds", m , s)
+end
+
 local function UpdateBars()
     local visitedItems = {}
     for c, time in pairs(LFTDB) do
-        if time > 0 then
-            table.insert(visitedItems, {
-                id = c,
-                time = time
-            })
-            --visitedItems[c] = time
-        end
+        table.insert(visitedItems, {
+            id = c,
+            time = time
+        })
+        --visitedItems[c] = time
     end
 
     table.sort(visitedItems, function(a, b)
-        return a.time < b.time
+        local aa, bb = a.time, b.time
+        if aa == 0 then 
+            aa = 999999999999
+        end
+        if bb == 0 then 
+            bb = 999999999999
+        end
+        return aa < bb
     end)
 
     local rowIndex = 1
@@ -156,9 +172,15 @@ local function UpdateBars()
 
         local now = GetServerTime()
         local elapsed = now - e.time
+        local m = elapsed / 60
+        local s = elapsed % 60
+        local timeStr = "---"
+        if e.time > 0 then
+            timeStr = formatMinSec(elapsed)
+        end
 
-        row.LeftText:SetText(coords)
-        row.RightText:SetFormattedText("%d s", elapsed)
+        row.LeftText:SetFormattedText("%d. %s", rowIndex ,coords)
+        row.RightText:SetText(timeStr)
 
         rowIndex = rowIndex + 1
     end
@@ -175,8 +197,17 @@ local function OnGatherClicked()
     end
 
     local now = GetServerTime()
+    local lastGatherTime = LFTDB[item]
+    local elapsed = now - lastGatherTime
     LFTDB[item] = now
-    print("Gathered: " .. item .. " at " .. now)
+
+    if not TIMES[item] then
+        TIMES[item] = {}
+    end
+    if lastGatherTime > 0 then 
+        table.insert(TIMES[item], elapsed)
+    end
+    print("Gathered: " .. item .. " at " .. now .. " passed time: " + formatMinSec(elapsed))
 end
 
 local function OnUpdate(self, elapsed)
@@ -192,10 +223,10 @@ local function OnUpdate(self, elapsed)
 end
 
 local function initData(resetTimers)
-    for i, v in pairs(Herbs) do
-        if v == Peacebloom and (not LFTDB[i] or resetTimers) then
+    for i, v in pairs(Zones[Winterspring].Herbs) do
+        if v == MountainSilversage and (not LFTDB[i] or resetTimers) then
             LFTDB[i] = 0
-           -- print(i .. ": " .. LFTDB[i])
+            print(i .. ": " .. LFTDB[i])
         end
 
     end
@@ -203,7 +234,7 @@ end
 
 local function createActionFrame()
     actionFrame = CreateFrame("Frame",  "LFT_ActionFrame", UIParent)   
-    actionFrame.DebugText = actionFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")  
+    actionFrame.DebugText = actionFrame:CreateFontString(nil, "MEDIUM", "GameFontNormal")  
     actionFrame.DebugText:ClearAllPoints()
     actionFrame.DebugText:SetPoint("CENTER", 0, 0)
 
@@ -213,7 +244,7 @@ local function createActionFrame()
     actionFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 300, -200)
     actionFrame:SetSize(200, 200)
     actionFrame:EnableMouse(true)
-    actionFrame:SetToplevel(true)
+    actionFrame:SetToplevel(false)
     actionFrame:SetMovable(1)
     actionFrame:RegisterForDrag("LeftButton")
     actionFrame:SetScript("OnDragStart", function(self)
@@ -235,7 +266,7 @@ local function createActionFrame()
         --end
     end)
     actionFrame:SetScript("OnUpdate", OnUpdate_ActionFrame)
-    actionFrame:SetFrameStrata("DIALOG")
+    actionFrame:SetFrameStrata("MEDIUM")
 
     local bg = actionFrame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(actionFrame)
@@ -274,7 +305,7 @@ local function createTrackerFrame()
     trackerFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 100, -200)
     trackerFrame:SetSize(200, 500)
     trackerFrame:EnableMouse(true)
-    trackerFrame:SetToplevel(true)
+    trackerFrame:SetToplevel(false)
     trackerFrame:SetMovable(1)
     trackerFrame:RegisterForDrag("LeftButton")
     trackerFrame:SetScript("OnDragStart", function(self)
@@ -296,7 +327,7 @@ local function createTrackerFrame()
         --end
     end)
     trackerFrame:SetScript("OnUpdate", OnUpdate)
-    trackerFrame:SetFrameStrata("DIALOG")
+    trackerFrame:SetFrameStrata("MEDIUM")
 
     local bg = trackerFrame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(trackerFrame)
